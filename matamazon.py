@@ -1,306 +1,401 @@
 # TODO add all imports needed here
+import json
+import argparse
+import sys
+
+
+class InvalidIdException(Exception):
+    pass
+
+
+class InvalidPriceException(Exception):
+    pass
+
 
 class Customer:
-    """
-    Represents a customer in the Matamazon system.
-
-    Required fields (per specification):
-        - id (int): Unique non-negative integer identifier.
-        - name (str): Customer name.
-        - city (str): Customer city.
-        - address (str): Customer shipping address.
-
-    Exceptions:
-        InvalidIdException: If 'id' is not valid according to the specification.
-
-    Printing:
-        Must support printing in the following format (example):
-            Customer(id=42, name='Daniel Elgarici', city='Karmiel, address='123 Main Street')
-        Exact formatting requirements appear in the assignment PDF.
-    """
-
     # TODO implement this class as instructed
-    pass
+    def __init__(self, id: int, name: str, city: str, address: str):
+        if not isinstance(id, int) or id <= 0:
+            raise InvalidIdException('Invalid customer id.')
+        self.id = id
+        self.name = name
+        self.city = city
+        self.address = address
+
+    def __repr__(self):
+        return (f"Customer(id={self.id}, "
+                f"name='{self.name}', "
+                f"city='{self.city}', "
+                f"address='{self.address}')")
 
 
 class Supplier:
-    """
-    Represents a supplier in the Matamazon system.
-
-    Required fields (per specification):
-        - id (int): Unique non-negative integer identifier.
-        - name (str): Supplier name.
-        - city (str): Warehouse city (origin city for shipping).
-        - address (str): Warehouse address.
-
-    Exceptions:
-        InvalidIdException: If 'id' is not valid according to the specification.
-
-    Printing:
-        Must support printing in the following format (example):
-            Supplier(id=42, name='Yinon Goldshtein', city='Haifa, address='32 David Rose Street')
-    """
-
     # TODO implement this class as instructed
-    pass
+    def __init__(self, id: int, name: str, city: str, address: str):
+        if not isinstance(id, int) or id <= 0:
+            raise InvalidIdException('Invalid supplier id.')
+        self.id = id
+        self.name = name
+        self.city = city
+        self.address = address
+
+    def __repr__(self):
+        return (f"Supplier(id={self.id}, "
+                f"name='{self.name}', "
+                f"city='{self.city}', "
+                f"address='{self.address}')")
 
 
 class Product:
-    """
-    Represents a product sold on the Matamazon website.
-
-    Required fields (per specification):
-        - id (int): Unique non-negative integer identifier.
-        - name (str): Product name.
-        - price (float): Non-negative price.
-        - supplier_id (int): ID of the supplier that provides the product.
-        - quantity (int): Non-negative quantity in stock.
-
-    Exceptions:
-        InvalidIdException:
-            - If id/supplier_id/quantity is invalid per specification.
-        InvalidPriceException:
-            - If price is invalid (e.g., negative).
-
-    Printing:
-        Must support printing in the following format (example):
-            Product(id=101, name='Harry Potter Cushion', price=29.99, supplier_id=42, quantity=555)
-    """
-
     # TODO implement this class as instructed
-    pass
+    def __init__(self, id: int, name: str, price: float, supplier_id: int, quantity: int):
+        if not isinstance(id, int) or id <= 0:
+            raise InvalidIdException("Product id must be a positive integer")
+
+        if not isinstance(supplier_id, int) or supplier_id <= 0:
+            raise InvalidIdException("Supplier id must be a positive integer")
+
+        if not isinstance(quantity, int) or quantity <= 0:
+            raise InvalidIdException("Quantity must be a positive integer")
+
+        if not isinstance(price, (int, float)) or price <= 0:
+            raise InvalidPriceException("Price must be positive")
+
+        self.id = id
+        self.name = name
+        self.price = price
+        self.supplier_id = supplier_id
+        self.quantity = quantity
+
+    def __repr__(self):
+        return (f"Product(id={self.id}, "
+                f"name='{self.name}', "
+                f"price={self.price}, "
+                f"supplier_id={self.supplier_id}, "
+                f"quantity={self.quantity})")
+
+    def __lt__(self, other):
+        return self.price < other.price
 
 
 class Order:
-    """
-    Represents a placed order.
-
-    Required fields (per specification):
-        - id (int): Unique non-negative integer identifier (assigned by the system).
-        - customer_id (int): ID of the customer who placed the order.
-        - product_id (int): ID of the ordered product.
-        - quantity (int): Ordered quantity (non-negative integer).
-        - total_price (float): Total price for the order (non-negative).
-
-    Exceptions:
-        InvalidIdException:
-            - If one of the ID fields is invalid.
-        InvalidPriceException:
-            - If total_price is invalid.
-
-    Printing:
-        Must support printing in the following format (example):
-            Order(id=1, customer_id=42, product_id=101, quantity=10, total_price=299.9)
-
-    """
-
     # TODO implement this class as instructed
-    pass
+    def __init__(self, id: int, customer_id: int, product_id: int, quantity: int, total_price: float):
+        # validate ids + quantity
+        if not isinstance(id, int) or id <= 0:
+            raise InvalidIdException("Order id must be a positive integer")
+
+        if not isinstance(customer_id, int) or customer_id <= 0:
+            raise InvalidIdException("Customer id must be a positive integer")
+
+        if not isinstance(product_id, int) or product_id <= 0:
+            raise InvalidIdException("Product id must be a positive integer")
+
+        if not isinstance(quantity, int) or quantity <= 0:
+            raise InvalidIdException("Quantity must be a positive integer")
+
+        # validate price
+        if not isinstance(total_price, (int, float)) or total_price <= 0:
+            raise InvalidPriceException("Total price must be positive")
+
+        self.id = id
+        self.customer_id = customer_id
+        self.product_id = product_id
+        self.quantity = quantity
+        self.total_price = total_price
+
+    def __repr__(self):
+        return (f"Order(id={self.id}, "
+                f"customer_id={self.customer_id}, "
+                f"product_id={self.product_id}, "
+                f"quantity={self.quantity}, "
+                f"total_price={self.total_price})")
 
 
 class MatamazonSystem:
-    """
-    Main system class that stores and manages customers, suppliers, products and orders.
-
-    The system must support:
-        - Registering customers/suppliers (with unique IDs across both types).
-        - Adding/updating products (must validate supplier existence).
-        - Placing orders (validate product existence and stock).
-        - Removing objects by ID and type (with dependency constraints).
-        - Searching products by name/query and optional max price.
-        - Exporting system state to a text file (customers/suppliers/products only).
-        - Exporting orders to JSON grouped by supplier origin city.
-
-    Notes:
-        - The specification does not require specific internal fields. Any data structures are allowed,
-          as long as the behaviors match the spec.
-        - A parameterless constructor is required.
-    """
-
     def __init__(self):
-        """
-        Initialize an empty Matamazon system.
-
-        Requirements:
-            - Must be parameterless.
-            - Internal collections may be chosen freely (dict/list, etc.).
-        """
         # TODO implement this method if needed
-        pass
+        self.customers = {}
+        self.suppliers = {}
+        self.products = {}
+        self.orders = {}
+        self.next_order_id = 1
 
     def register_entity(self, entity, is_customer):
-        """
-        Register a Customer or Supplier in the system.
-
-        Args:
-            entity: A Customer or Supplier object.
-            is_customer (bool): True if entity is Customer, False if entity is Supplier.
-
-        Raises:
-            InvalidIdException:
-                - If the entity ID is invalid.
-                - If the entity ID already exists in the system (note: IDs must be unique across
-                  customers AND suppliers).
-        """
         # TODO implement this method as instructed
-        pass
+        entity_id = entity.id
+
+        if entity_id in self.customers or entity_id in self.suppliers:
+            entity_type = "Customer" if is_customer else "Supplier"
+            raise InvalidIdException(f"{entity_type} with this id already exists")
+
+        if is_customer:
+            self.customers[entity_id] = entity
+        else:
+            self.suppliers[entity_id] = entity
 
     def add_or_update_product(self, product):
-        """
-        Add a new product or update an existing product.
-
-        Behavior:
-            - If product does not exist in system: add it.
-            - If product exists:
-                - It must belong to the same supplier as the existing one (same supplier_id),
-                  otherwise raise InvalidIdException.
-                - Update the stored product's fields according to the new product.
-
-        Args:
-            product: A Product object.
-
-        Raises:
-            InvalidIdException:
-                - If the supplier_id does not exist in the system.
-                - If attempting to update a product but supplier_id differs from the existing product.
-        """
         # TODO implement this method as instructed
-        pass
+        existing = self.products.get(product.id)
+
+        if existing and existing.supplier_id != product.supplier_id:
+            raise InvalidIdException("Product belongs to a different supplier")
+
+        self.products[product.id] = product
 
     def place_order(self, customer_id, product_id, quantity=1):
-        """
-        Place an order for a product by a customer.
-
-        Args:
-            customer_id (int): Customer ID.
-            product_id (int): Product ID.
-            quantity (int, optional): Quantity to order. Defaults to 1.
-
-        Returns:
-            str: Status message according to specification:
-                - "The order has been accepted in the system"
-                - "The product does not exist in the system"
-                - "The quantity requested for this product is greater than the quantity in stock"
-
-        Behavior:
-            - If product does not exist: return the relevant message.
-            - If quantity requested > stock: return the relevant message.
-            - Otherwise:
-                - Decrease product stock by quantity.
-                - Create a new Order with an auto-incremented system ID (starting at 1).
-                - Store the order in the system.
-                - Return success message.
-
-        Notes:
-            - The specification assumes quantity is an integer.
-        """
         # TODO implement this method as instructed
-        pass
+        if customer_id not in self.customers:
+            raise InvalidIdException("Customer does not exist")
+
+        product = self.products.get(product_id)
+        if not product:
+            return "The product does not exist in the system"
+
+        if quantity > product.quantity:
+            return "The quantity requested for this product is greater than the quantity in stock"
+
+        product.quantity -= quantity
+
+        order_id = self.next_order_id
+        self.next_order_id += 1
+        total_price = product.price * quantity
+        order = Order(order_id, customer_id, product_id, quantity, total_price)
+
+        self.orders[order_id] = order
+
+        return "The order has been accepted in the system"
 
     def remove_object(self, _id, class_type):
-        """
-        Remove an object from the system by ID and type.
-
-        Args:
-            _id (int): Object ID to remove.
-            class_type (str): One of: "Customer", "Supplier", "Product", "Order"
-                              (exact casing/spelling per assignment).
-
-        Returns:
-            int | None:
-                - If removing an Order: return the ordered quantity of that order (to restore stock).
-                - Otherwise: no return value required.
-
-        Raises:
-            InvalidIdException:
-                - If _id is not a valid non-negative integer.
-                - If attempting to remove a Customer/Supplier/Product that still has dependent orders
-                  in the system (i.e., orders that were not removed).
-                - Additional InvalidIdException conditions as required by specification.
-        """
         # TODO implement this method as instructed
-        pass
+        if not isinstance(_id, int) or _id <= 0:
+            raise InvalidIdException("Invalid id")
+
+        if class_type is Customer:
+            if _id not in self.customers:
+                raise InvalidIdException("Customer does not exist")
+            if any(o.customer_id == _id for o in self.orders.values()):
+                raise InvalidIdException("Customer is referenced by an existing order")
+            del self.customers[_id]
+            return
+
+        if class_type is Product:
+            if _id not in self.products:
+                raise InvalidIdException("Product does not exist")
+            if any(o.product_id == _id for o in self.orders.values()):
+                raise InvalidIdException("Product is referenced by an existing order")
+            del self.products[_id]
+            return
+
+        if class_type is Supplier:
+            if _id not in self.suppliers:
+                raise InvalidIdException("Supplier does not exist")
+            for o in self.orders.values():
+                p = self.products.get(o.product_id)
+                if p and p.supplier_id == _id:
+                    raise InvalidIdException("Supplier is referenced by an existing order")
+            del self.suppliers[_id]
+            return
+
+        if class_type is Order:
+            if _id not in self.orders:
+                raise InvalidIdException("Order does not exist")
+            order = self.orders[_id]
+            product = self.products.get(order.product_id)
+            if product:
+                product.quantity += order.quantity
+            del self.orders[_id]
+            return
 
     def search_products(self, query, max_price=None):
-        """
-        Search products by query in the product name, and optionally filter by max_price.
-
-        Args:
-            query (str): Product name or part of product name.
-            max_price (float, optional): If provided, only return products with price <= max_price.
-
-        Returns:
-            list[Product]:
-                - Products that match the query and have quantity != 0,
-                - Sorted by ascending price.
-                - If no matching products exist, return an empty list.
-        """
         # TODO implement this method as instructed
-        pass
+        matches = []
+
+        for p in self.products.values():
+            if p.quantity == 0:
+                continue
+            if query not in p.name:
+                continue
+            if max_price is not None and p.price > max_price:
+                continue
+            matches.append(p)
+
+        return sorted(matches)
 
     def export_system_to_file(self, path):
-        """
-        Export system state (customers, suppliers, products) to a text file.
-
-        Args:
-            path (str): Output file path.
-
-        Behavior:
-            - Write each object on its own line, using the object's print/str representation.
-            - Orders must NOT be included.
-            - No constraint on the ordering of objects in the output.
-
-        Raises:
-            OSError (or any file-open exception): Must be propagated to the caller.
-        """
         # TODO implement this method as instructed
-        pass
+        try:
+            with open(path, "w", encoding="utf-8") as f:
+                for c in self.customers.values():
+                    print(c, file=f)
+                for s in self.suppliers.values():
+                    print(s, file=f)
+                for p in self.products.values():
+                    print(p, file=f)
+        except OSError:
+            raise
 
     def export_orders(self, out_file):
-        """
-        Export orders in JSON format grouped by origin city.
-
-        Args:
-            out_file (file-like)
-
-        Behavior (per specification):
-            - Produce a JSON object where:
-                - Keys: origin city (supplier city) for each order.
-                - Values: list of strings representing orders (format as specified in section 4.1.4).
-            - Order lists can be in any order.
-            - No requirement on key ordering.
-
-        Raises:
-            Any exception during writing: Must be propagated to the caller.
-
-        Notes:
-            - The order origin city is the supplier city of the ordered product.
-        """
         # TODO implement this method as instructed
-        pass
+        data = {}
 
+        try:
+            for o in self.orders.values():
+                product = self.products.get(o.product_id)
+                if product is None:
+                    raise InvalidIdException("Order references a non-existing product")
+
+                supplier = self.suppliers.get(product.supplier_id)
+                if supplier is None:
+                    raise InvalidIdException("Order references a non-existing supplier")
+
+                origin = supplier.city
+
+                data.setdefault(origin, []).append(repr(o))
+
+            json.dump(data, out_file)
+
+        except Exception:
+            raise
 
 def load_system_from_file(path):
-    """
-    Load a MatamazonSystem from an input file.
-
-    Args:
-        path (str): Path to a text file containing customers, suppliers and products.
-
-    Returns:
-        MatamazonSystem: Initialized system with the data found in the file.
-
-    Behavior:
-        - The file lines contain objects in the format produced by export_system_to_file (section 4.2).
-        - Lines may appear in any order (e.g., product lines can appear before supplier lines).
-        - Illegal lines may be ignored.
-        - If an exception occurs during the creation of any required object due to invalid data,
-          the function should stop and propagate the exception (as specified).
-
-    Notes:
-        - The assignment hints that eval() may be used.
-    """
     # TODO implement this function as instructed
-    pass
+    system = MatamazonSystem()
+
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+
+                obj = eval(line)
+
+                if isinstance(obj, Customer):
+                    system.register_entity(obj, is_customer=True)
+
+                elif isinstance(obj, Supplier):
+                    system.register_entity(obj, is_customer=False)
+
+                elif isinstance(obj, Product):
+                    system.add_or_update_product(obj)
+
+    except Exception:
+        raise
+
+    return system
 
 # TODO all the main part here
+USAGE_LINE = "Usage: python3 matamazon.py -l < matamazon_log > -s < matamazon_system > -o <output_file> -os <out_matamazon_system>"
+
+
+def _u2s(token: str) -> str:
+    return token.replace("_", " ")
+
+
+def _class_from_token(tok: str):
+    tok = tok.lower()
+    if tok == "customer":
+        return Customer
+    if tok == "supplier":
+        return Supplier
+    if tok == "product":
+        return Product
+    if tok == "order":
+        return Order
+    raise InvalidIdException("Invalid class_type")
+
+
+def main():
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument("-l", dest="log_path")
+    parser.add_argument("-s", dest="system_path", default=None)
+    parser.add_argument("-o", dest="out_file_path")
+    parser.add_argument("-os", dest="out_system_path")
+
+    args = parser.parse_args()
+
+    if not args.log_path:
+        print(USAGE_LINE)
+        sys.exit(1)
+
+    try:
+        if args.system_path is not None:
+            system = load_system_from_file(args.system_path)
+        else:
+            system = MatamazonSystem()
+
+        with open(args.log_path, "r", encoding="utf-8") as f:
+            for raw in f:
+                line = raw.strip()
+                if not line:
+                    continue
+
+                parts = line.split()
+                cmd = parts[0].lower()
+
+                if cmd == "register":
+                    if len(parts) != 6:
+                        raise ValueError
+                    kind = parts[1].lower()
+                    _id = int(parts[2])
+                    name = _u2s(parts[3])
+                    city = _u2s(parts[4])
+                    address = _u2s(parts[5])
+
+                    if kind == "customer":
+                        system.register_entity(Customer(_id, name, city, address), True)
+                    else:
+                        system.register_entity(Supplier(_id, name, city, address), False)
+
+                elif cmd in ("add", "update"):
+                    if len(parts) != 6:
+                        raise ValueError
+                    pid = int(parts[1])
+                    name = _u2s(parts[2])
+                    price = float(parts[3])
+                    supplier_id = int(parts[4])
+                    quantity = int(parts[5])
+                    system.add_or_update_product(Product(pid, name, price, supplier_id, quantity))
+
+                elif cmd == "order":
+                    if len(parts) not in (3, 4):
+                        raise ValueError("bad order command length")
+                    customer_id = int(parts[1])
+                    product_id = int(parts[2])
+                    qty = int(parts[3]) if len(parts) == 4 else 1
+                    system.place_order(customer_id, product_id, qty)
+
+                elif cmd == "remove":
+                    if len(parts) != 3:
+                        raise ValueError
+                    class_tok = parts[1]
+                    _id = int(parts[2])
+                    cls = _class_from_token(class_tok)
+                    system.remove_object(_id, cls)
+
+                elif cmd == "search":
+                    if len(parts) not in (2, 3):
+                        raise ValueError("bad search command length")
+                    query = _u2s(parts[1])
+                    max_price = float(parts[2]) if len(parts) == 3 else None
+                    res = system.search_products(query, max_price)
+                    print(res)
+
+                else:
+                    raise ValueError("Unknown command")
+
+        if args.out_file_path:
+            with open(args.out_file_path, "w", encoding="utf-8") as out_f:
+                system.export_orders(out_f)
+
+        if args.out_system_path:
+            system.export_system_to_file(args.out_system_path)
+
+    except Exception:
+        print("The matamazon script has encountered an error")
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()
