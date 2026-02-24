@@ -123,16 +123,16 @@ class MatamazonSystem:
 
     def register_entity(self, entity, is_customer):
         # TODO implement this method as instructed
-        entity_id = entity.id
+        entity_dict = self.customers if is_customer else self.suppliers
+        entity_type = "Customer" if is_customer else "Supplier"
 
-        if entity_id in self.customers or entity_id in self.suppliers:
-            entity_type = "Customer" if is_customer else "Supplier"
-            raise InvalidIdException(f"{entity_type} with this id already exists")
+        existing = entity_dict.get(entity.id)
 
-        if is_customer:
-            self.customers[entity_id] = entity
-        else:
-            self.suppliers[entity_id] = entity
+        if existing and repr(existing) != repr(entity):
+            raise InvalidIdException(f"{entity_type} with this is already exists")
+
+        if not existing:
+            entity_dict[entity.id] = entity
 
     def add_or_update_product(self, product):
         # TODO implement this method as instructed
